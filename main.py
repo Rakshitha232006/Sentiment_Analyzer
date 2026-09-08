@@ -1,16 +1,63 @@
-# This is a sample Python script.
+import streamlit as st
+import sys
+from pathlib import Path
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+# Add text-classification folder to Python path
+sys.path.append(
+    str(Path(__file__).parent / "text-classification")
+)
+
+from sentiment_analyzer import read_reviews_and_analyze_sentiment
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+st.set_page_config(
+    page_title="Sentiment Analyzer",
+    page_icon="📊",
+    layout="wide"
+)
+
+st.title("📊 Sentiment Analyzer")
+
+st.write(
+    "Upload an Excel file containing reviews "
+    "to analyze the sentiment of each review."
+)
+
+uploaded_file = st.file_uploader(
+    "Upload your Review file",
+    type=["xlsx"]
+)
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+if uploaded_file is not None:
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    try:
+        df, chart = read_reviews_and_analyze_sentiment(
+            uploaded_file
+        )
+
+        st.success("Sentiment analysis completed!")
+
+        st.subheader("Review Results")
+
+        st.dataframe(
+            df,
+            use_container_width=True
+        )
+
+        st.subheader("Sentiment Analysis")
+
+        st.pyplot(chart)
+
+        # Download results
+        csv = df.to_csv(index=False).encode("utf-8")
+
+        st.download_button(
+            label="Download Results",
+            data=csv,
+            file_name="sentiment_results.csv",
+            mime="text/csv"
+        )
+
+    except Exception as e:
+        st.error(str(e))
